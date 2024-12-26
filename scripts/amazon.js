@@ -1,5 +1,6 @@
-import {cart} from '../data/cart.js';
+import {cart, addToCart} from '../data/cart.js';
 import { products } from '../data/products.js';
+
 
 let productsHTML='';
 
@@ -63,52 +64,44 @@ document.querySelector('.js-products-grid').innerHTML = productsHTML;
 
 const addedMessageTimeouts = {};
 
+function updateCartQuantity(){
+  let cartQuantity = 0;
+
+  cart.forEach((cartItem) => {
+    cartQuantity += cartItem.quantity;
+  })
+
+  document.querySelector('.js-cart-quantity').innerHTML = cartQuantity;
+}
+
+function updateAddToCartTimeout(productId){
+  const addedSelector = document.querySelector(`.js-added-${productId}`);
+
+  addedSelector.classList.add('added-to-cart-visible');
+
+  const previousTimeoutId = addedMessageTimeouts[productId];
+  if(previousTimeoutId){
+    clearTimeout(previousTimeoutId);
+  }
+
+  const timeoutId = setTimeout(() => {
+    addedSelector.classList.remove('added-to-cart-visible');
+  },2000);
+  
+  addedMessageTimeouts[productId] = timeoutId;
+
+}
 
 document.querySelectorAll('.js-add-to-cart').forEach((button) => {
   button.addEventListener('click',() => {
     const productId = button.dataset.productId;
 
-    let matchingItem;
-
-    cart.forEach((item)=>{
-      if (productId === item.productId){
-        matchingItem = item;
-      }
-    });
-
     const quantitySelector = document.querySelector(`.js-quantity-selector-${productId}`);
     const quantity = Number(quantitySelector.value);
 
-    const addedSelector = document.querySelector(`.js-added-${productId}`);
-
-    addedSelector.classList.add('added-to-cart-visible');
-
-    const previousTimeoutId = addedMessageTimeouts[productId];
-    if(previousTimeoutId){
-      clearTimeout(previousTimeoutId);
-    }
-
-    const timeoutId = setTimeout(() => {
-      addedSelector.classList.remove('added-to-cart-visible');
-    },2000);
-    
-    addedMessageTimeouts[productId] = timeoutId;
-
-    if(matchingItem){
-      matchingItem.quantity +=1;
-    } else{
-      cart.push({
-        productId,
-        quantity,
-      });
-    }
-
-    let cartQuantity = 0;
-
-    cart.forEach((item) => {
-      cartQuantity += item.quantity;
-    })
-
-    document.querySelector('.js-cart-quantity').innerHTML = cartQuantity;
+    addToCart(productId,quantity);
+    updateCartQuantity();
+    updateAddToCartTimeout(productId);
+   
   });
 });
